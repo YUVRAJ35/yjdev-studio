@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YJDEV STUDIOS - Class 10 AI Grader</title>
+    <script src='https://unpkg.com/tesseract.js@v5.1.0/dist/tesseract.min.js'></script>[page:1]
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: linear-gradient(to bottom, #4facfe, #00f2fe); color: #333; }
+        h1 { text-align: center; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .subject { margin: 20px 0; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        button { background: #ff6b6b; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #ff5252; }
+        #video, #canvas { width: 100%; max-width: 400px; border: 2px solid #ddd; border-radius: 5px; }
+        #result, #model { margin-top: 10px; padding: 10px; background: #e8f5e8; border-radius: 5px; }
+        select, input { padding: 8px; margin: 5px; border-radius: 5px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>🚀 YJDEV STUDIOS - Ace Class 10 Boards from Feb 17! 😈</h1>
+    <p style="text-align: center; color: #fff;">AI Grader: Snap your answer, get instant score & model solution!</p>
+
+    <div class="subject">
+        <h2>Select Subject & Chapter</h2>
+        <select id="subject">
+            <option value="science">Science</option>
+            <option value="maths">Maths</option>
+            <option value="sst">Social Science (SST)</option>
+            <option value="english">English</option>
+            <option value="hindi">Hindi</option>
+        </select>
+        <select id="chapter">
+            <option value="science1">Ch1: Chemical Reactions (Science)</option>
+            <option value="science2">Ch2: Acids & Bases (Science)</option>
+            <option value="maths1">Ch1: Real Numbers (Maths)</option>
+            <option value="sst1">Ch1: Nationalism in India (SST)</option>
+        </select>
+        <button onclick="loadQuestion()">Load Question</button>
+        <p id="question"></p>
+    </div>
+
+    <div class="subject">
+        <h2>📸 Camera: Write & Snap Your Answer</h2>
+        <video id="video" autoplay></video>
+        <button onclick="startCamera()">Start Camera</button>
+        <button onclick="capturePhoto()">Capture Answer</button>
+        <canvas id="canvas" style="display:none;"></canvas>
+        <button onclick="gradeAnswer()" id="gradeBtn" disabled>Grade with AI</button>
+    </div>
+
+    <div id="result"></div>
+    <div id="model"></div>
+
+    <script>
+        const questions = {
+            science1: "Q: What is a chemical reaction? Give an example. [web:1]",
+            science2: "Q: Define acid and base with examples. [web:1]",
+            maths1: "Q: Prove that √2 is irrational. [web:1]",
+            sst1: "Q: Explain Non-Cooperation Movement. [web:1]"
+        };
+        const modelAnswers = {
+            science1: "A chemical reaction is a process where substances (reactants) change into new substances (products). Example: 2H₂ + O₂ → 2H₂O (combustion).",
+            science2: "Acid: Sour taste, turns blue litmus red (e.g., HCl). Base: Bitter, turns red litmus blue (e.g., NaOH).",
+            maths1: "Assume √2 = p/q (coprime). Then 2q² = p² (even p), p=2k, 2q²=4k², q²=2k² (even q). Contradiction! [web:1]",
+            sst1: "Launched by Gandhi in 1920 against Rowlatt Act, included boycott of foreign goods, schools; ended with Chauri Chaura violence."
+        };
+        let stream, video, canvas, ctx, capturedImage;
+
+        function loadQuestion() {
+            const sub = document.getElementById('subject').value;
+            const ch = document.getElementById('chapter').value;
+            document.getElementById('question').innerHTML = questions[ch] || 'Select valid chapter.';
+        }
+
+        async function startCamera() {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            video = document.getElementById('video');
+            video.srcObject = stream;
+        }
+
+        function capturePhoto() {
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.style.display = 'block';
+            ctx.drawImage(video, 0, 0);
+            capturedImage = canvas.toDataURL('image/png');
+            document.getElementById('gradeBtn').disabled = false;
+        }
+
+        async function gradeAnswer() {
+            const worker = await Tesseract.createWorker('eng');
+            const { data: { text: extractedText } } = await worker.recognize(capturedImage);
+            await worker.terminate();
+
+            const ch = document.getElementById('chapter').value;
+            const model = modelAnswers[ch] || 'No model answer.';
+            const keywords = model.toLowerCase().split(' ').slice(0,10); // Simple keywords from model
+            const score = Math.round((extractedText.toLowerCase().split(' ').filter(word => keywords.includes(word)).length / keywords.length) * 100);
+
+            // Demo AI grading (replace with fetch to Grok API: https://x.ai/api)
+            // Example: fetch('https://api.x.ai/v1/chat/completions', {method:'POST', headers:{'Authorization': 'Bearer YOUR_KEY'}, body: JSON.stringify({model:'grok-4', messages:[{role:'user', content:`Grade this Class 10 answer on 100 for ${document.getElementById('question').innerText}. Extracted: ${extractedText}. Model: ${model}`}]})}).then(r=>r.json()).then(data=>score=parseInt(data.choices[0].message.content));
+            
+            document.getElementById('result').innerHTML = `<strong>Extracted Text:</strong> ${extractedText}<br><strong>AI Score: ${score}/100</strong> (Based on relevance to model)`;
+            document.getElementById('model').innerHTML = `<strong>Model Answer:</strong> ${model}`;
+        }
+    </script>
+</body>
+</html>
